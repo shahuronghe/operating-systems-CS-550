@@ -16,13 +16,17 @@ int main(int argc, char *argv[]){
 	//base check
 	if(argc != 3 || !checkArgumentsForInteger(argc, argv)){
 		printf("Invalid input parameters\n");
+		for(int i = 1; i < argc; i++){
+			printf("%d\n",argv[i]);
+                }
 		printf("Please enter the number of levels of the tree (L) AND number of children of each internal node of the process tree (N).\n");
 		return 0;
 	}
 
 	int lvl = atoi(argv[1]);
 	int n = atoi(argv[2]);
-
+	printf("level: %d\n",lvl);
+	printf("nL %d\n",n);
 	if(lvl==0){
 		return 0;
 	}
@@ -58,8 +62,17 @@ int main(int argc, char *argv[]){
 	printf("Parent's id: %d\n",getppid());
 	printf("Level in the tree = %d\n",lvl);
 	printf("Creating %d children at Level %d\n",n,lvl);
+	
 	for(int j = 0; j < n; j++){
-
+		char *a[]={"./ass1"};
+		char l[10];
+		char n2[10];
+		sprintf(l,"%d",lvl-1);
+		sprintf(n2,"%d",n);
+		char *b[]={argv[1],argv[2]};
+		if(execlp("./ass1","./ass1", l, n2, (char *) NULL)==-1){
+			printf("execFailed\n");
+		}
 	}
 	wait(&status);
 	return 0;	
