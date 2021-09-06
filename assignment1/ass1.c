@@ -5,27 +5,27 @@
 #include <sys/wait.h>
 #include <stdbool.h>
 #include<ctype.h>
+#include <regex.h>
+
 
 
 bool checkArgumentsForInteger(int argc, char *argv[]);
 
-void createProcessTree(int L, int N);
 
-
-int main(int argc, char *argv[])
-{
-
+int main(int argc, char *argv[]){
 	//base check
 	if(argc != 3 || !checkArgumentsForInteger(argc, argv)){
 		printf("Invalid input parameters\n");
 		printf("Please enter the number of levels of the tree (L) AND number of children of each internal node of the process tree (N).\n");
-		return -1;
+		return 0;
 	}
 
-	int L = atoi(argv[1]);
-	int N = atoi(argv[2]);
+	int lvl = atoi(argv[1]);
+	int n = atoi(argv[2]);
 
-	createProcessTree(L, N);
+	if(lvl==0){
+		return 0;
+	}
 
 	/**
 	pid_t pid;
@@ -52,41 +52,27 @@ int main(int argc, char *argv[])
 		printf("Child exited with status %d\n", WEXITSTATUS(status));
 	}
 	*/
-	return 0;
-}
-
-void createProcessTree(int L, int N){
 	int status;
-	if(L==0){
-		exit(0);
-	}
-	pid_t pid =	fork();
-	if(pid>0){
-	printf("Process starting\n");
+	pid_t pid = fork();
+	printf("Process starting\n");		
 	printf("Parent's id: %d\n",getppid());
-	printf("Level in the tree = %d\n", L);
-	printf("Creating %d children at Level %d\n",N,L);
-	}
-	if(pid==0){
-	for(int j = 0; j < N; j++){
-//		if(execlp("echo","echo","Hello from child",(char*) NULL) ==-1){
-//			printf("Process Creation Failed");
-//			exit(-1);
-//		}
-		fork();
-	}
+	printf("Level in the tree = %d\n",lvl);
+	printf("Creating %d children at Level %d\n",n,lvl);
+	for(int j = 0; j < n; j++){
+
 	}
 	wait(&status);
-	createProcessTree(L-1,N);
-
-	
+	return 0;	
 }
 
 bool checkArgumentsForInteger(int argc, char *argv[]){
-        for(int i = 1; i < argc; i++){
-		int val = atoi(argv[i]);
-		if(val == 0){
-			return false;
+	regex_t regex;
+	int return_value;
+	for(int i = 1; i < argc; i++){
+		regcomp(&regex, "^[0-9]*$", 0);
+		return_value = regexec(&regex, argv[i], 0, NULL, 0);
+		if (return_value != 0) {
+		    return false;
 		}
 	}
 	return true;
