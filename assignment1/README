@@ -1,0 +1,15 @@
+Assignment 1: Process Tree
+
+a program to create a process tree that is L levels high, print information 
+about processes as they are created and destroyed.
+
+Compilation:
+	make
+	make all
+
+Execution:
+	./ass1 {L} {N}
+
+Group Members:
+	Shahu S Ronghe [sronghe1@binghamton.edu]
+	Shantanu S Walunj [swalunj1@binghamton.edu]
