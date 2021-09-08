@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
 		int ret = waitpid(pid, &status, 0);
 		if(ret < 0){
 			perror("waitpid failed\n");
-		}else{
+		} else {
 			printf("Terminating at Level: %d\n", lvl);
 		}
 	}
