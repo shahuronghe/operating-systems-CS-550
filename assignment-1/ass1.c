@@ -38,8 +38,7 @@ int main(int argc, char *argv[]){
 	//checking if level is greater than 0.
 	if(lvl>0){
 		int status = 0;
-		int cpid,ret;
-		cpid = getpid();
+		int cpid = getpid();
 		pid_t pid = -1;
 		printf("(%d) Process starting\n", cpid);		
 		printf("(%d) Parent's id: %d\n", cpid, getppid());
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]){
 		printf("(%d) Creating %d children at Level %d\n", cpid, n, lvl);
 	
 		//creating N children for parents
-		for(int j = 0; j < n; j++){
+		for(int i = 0; i < n; i++){
 			if(pid == -1 || pid > 0){
 				pid = fork();
 			}
@@ -66,7 +65,7 @@ int main(int argc, char *argv[]){
 			char lvl2[10];
 	                sprintf(lvl2, "%d", lvl-1);
 
-			if(execlp("./ass1", "./ass1", lvl2, argv[2], (char *) NULL)==-1){
+			if(execlp("./ass1", "./ass1", lvl2, argv[2], (char *) NULL) == -1){
 				printf("exec call failed\n");
 				exit(-1);
 			}
