@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
 	
 		if(pid == 0){
 			//1sec sleep for seamless simulation of process tree.
-		//	sleep(1);
+		sleep(1);
 		
 			//conversion of int to char to pass them as arguments to this program.
 			char lvl2[10];
