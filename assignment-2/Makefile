@@ -1,8 +1,8 @@
-TARGET = ass1
+TARGET = main
 all:
-	gcc -o $(TARGET) ass1.c
+	gcc -o $(TARGET) part1.c
 	$(info Program has been compiled as $(TARGET) output file)
-	$(info please run ./$(TARGET) {L} {N} as parameters)
+	$(info please run ./$(TARGET) {P} {M} as parameters)
 
 clean:
 	rm $(TARGET)
