@@ -32,50 +32,75 @@ int main(int argc, char *argv[]){
 		printf("Please enter the number of levels of the tree (L) AND number of children of each internal node of the process tree (N).\n");
 		return -1;
 	}
-	int lvl = atoi(argv[1]);
-	int n = atoi(argv[2]);
+    int P = atoi(argv[1]);
+        int M = atoi(argv[2]);
+        pid_t pid = -1;
 
-	//checking if level is greater than 0.
-	if(lvl>0){
-		int status = 0;
-		int cpid = getpid();
-		pid_t pid = -1;
-		printf("(%d) Process starting\n", cpid);		
-		printf("(%d) Parent's id: %d\n", cpid, getppid());
-		printf("(%d) Level in the tree = %d\n", cpid, lvl);
-		printf("(%d) Creating %d children at Level %d\n", cpid, n, lvl);
-	
-		//creating N children for parents
-		for(int i = 0; i < n; i++){
-			if(pid == -1 || pid > 0){
-				pid = fork();
-			}
-		}
+        
+      
+      if(pid > 0){
+                key_t key;
+                int shmid;
+                int *data;
+                int arr[5]={1,2};
+                int Winner_id;
+                int mode;
+                int total;
 
-		if(pid < 0){
-			perror("fork failed\n");
-			exit(-1);
-		}
-	
-		if(pid == 0){
-			//1sec sleep for seamless simulation of process tree.
-		sleep(1);
-		
-			//conversion of int to char to pass them as arguments to this program.
-			char lvl2[10];
-	                sprintf(lvl2, "%d", lvl-1);
+           /* make the key: */
+           if ((key = ftok("test_shm", 'X')) < 0) {
+                perror("ftok");
+                exit(1);
+           }
 
-			if(execlp("./ass1", "./ass1", lvl2, argv[2], (char *) NULL) == -1){
-				printf("exec call failed\n");
-				exit(-1);
-			}
-		}
-		if(pid > 0){
-        	        while ((pid = waitpid(-1, &status, 0)) != -1);
-		}
+           /* create the shared memory segment: */
+           if ((shmid = shmget(key, SHM_SIZE, 0644 | IPC_CREAT | IPC_EXCL )) < 0) {
+                perror("shmget");
+                exit(1);
+           }
+           
+           /* attach to the segment to get a pointer to it: */
+            data = shmat(shmid, (void *)0, 0);
+            if (data == (int *)(-1)) {
+                perror("shmat");
+                exit(1);
+            }
 
-		printf("(%d) Terminating at Level: %d\n", cpid, lvl);
-	}
+                memcpy(data,arr,sizeof(arr));
+
+            
+
+                for(int i = 0; i < P; i++){
+                if(pid == -1 || pid > 0){
+                    pid = fork();
+                }
+              
+              
+      
+                        while ((pid = waitpid(-1, &status, 0)) != -1);
+            }
+
+            if (pid == 0){
+
+                if(arr[0] || arr[1] < M)
+                {
+                    exit(-1);
+                }
+                else
+                {
+                    total=arr[0]+ arr[1];
+                    if(arr[0] < arr[1])
+                    {
+                        arr[0]=total;
+                    }
+                    else
+                    {
+                        arr[1]=total;
+                    }
+                }
+                
+
+            }
 	return 0;	
 }
 
