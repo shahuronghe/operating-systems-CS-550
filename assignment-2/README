@@ -1,0 +1,14 @@
+Assignment 2: Inter-Process Synchronization and Concurrency
+
+In this assignment, you will create three versions of a simple multi-process game. The three versions differ only in the type of synchronization they use: one uses busy-wait, another uses busy-wait with yield, and the third uses blocking semaphores. You will also measure the relative performance of these three versions of your multi-process game.
+
+Compilation:
+	make
+	make all
+
+Execution:
+	./ass1 {P} {M}
+
+Group Members:
+	Shahu S Ronghe [sronghe1@binghamton.edu]
+	Shantanu S Walunj [swalunj1@binghamton.edu]
