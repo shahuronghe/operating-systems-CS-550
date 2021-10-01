@@ -12,84 +12,93 @@
 #define SHM_SIZE 1024  /* make it a 1K shared memory segment */
 
 
-//function declaration.
-bool checkArgumentsForInteger(int argc, char *argv[]);
-int *attachShmMem();
-void deleteShmMem();
+//function declarations.
+bool check_arguments_for_integer(int argc, char *argv[]);
+int *attach_shm_mem();
+void delete_shm_mem();
 
 int shmid;
 
 /*
  * Function: main
  * --------------------
- *  main function that takes inputs (L and N) to create a process tree using fork() and execlp() system calls.
+ *  main function that takes inputs (P and M) to create child process and calculate the sum of two static numbers and get the winner PID where sum is greater than M.
  *
  *  argc: number of arguments.
  *
- *  argv[1]: as lvl, number of level in process tree.
+ *  argv[1]: as P, number of child processes.
  *
- *  argv[2]: as n, number of children at each level.
+ *  argv[2]: as M, maximum value of Sum of static two numbers.
  *
  *  returns: the primary end of program with return value.
  *  		0 if no errors, otherwise -1
  */
 int main(int argc, char *argv[]){
 	//base check
-	if(argc != 3 || !checkArgumentsForInteger(argc, argv)){
+	if(argc != 3 || !check_arguments_for_integer(argc, argv)){
 		printf("Invalid input parameters\n");
 		printf("Please enter the number of levels of the tree (L) AND number of children of each internal node of the process tree (N).\n");
 		return -1;
 	}
-	int P = atoi(argv[1]);
-        int M = atoi(argv[2]);
+
+	int num_of_children = atoi(argv[1]);
+        int max_value = atoi(argv[2]);
         pid_t pid = -1;
-	int *data= attachShmMem();	
-	for(int i = 0; i < P; i++){
+
+	//create and attach shared memory
+	int *data= attach_shm_mem();	
+	for(int i = 0; i < num_of_children; i++){
 		if(pid == -1 || pid > 0){
 			pid = fork();
+
 		}
 	}
 
-        
       	if(pid > 0){
-//		int *data = attachShmMem();
 		//writing initial values to shared memory
 		data[0] = 1;
 	    	data[1] = 2;
 	    	data[2] = -1;
-	    	printf("values: %d , %d , %d \n",data[0],data[1],data[2]);
               
 	    	while ((waitpid(-1, 0, 0)) != -1);
 	}
-	printf("pid: %d\n",pid);
+
         if (pid == 0){
 		//child block
-		printf("executing child, %d , %d\n",data[0],data[1]);
-		while(data[0] < M && data[1] < M && data[2]==-1){			
+		printf("Executing child %d\n",getpid());
+		while(data[0] < max_value && data[1] < max_value && data[2] == -1){			
 			int total = data[0] + data[1];
-			printf("total is %d\n",total);
-			if (data[0] < data[1])
-				data[0] = total;
-			else
-				data[1] = total;
-
-			if(total > M && data[2]==-1){
+			printf("%d - Calculating Sum\t Value 1: %d\t Value 2: %d\t Total: %d\n", getpid(), data[0], data[1], total);
+			if (total > max_value && data[2] == -1){
 				data[2] = getpid();
+				printf("\n*** Winner PID: %d, Max Value: %d, Total: %d ***\n\n", getpid(), max_value, total);
+				exit(0);
+			} else {
+				if (data[0] < data[1])
+        	                        data[0] = total;
+	                        else
+                	                data[1] = total;
 			}
+
 		}
 	}
-	printf("Winner PID: %d\n",data[2]);
-	deleteShmMem();	
-	printf("exited\n");
+
+	delete_shm_mem();	
 	return 0;	
 }
 
-int *attachShmMem(){
+/*
+ * Function:  attach_shm_mem
+ * -----------------------------------
+ *  Helper function to create, attach and retreive data from shared memory using the key.
+ *
+ *  returns: integer pointer to the shared memory.
+ */
+int *attach_shm_mem(){
 	int *data;
 	key_t key;
-	//int shmid;
 	/* make the key: */
-        if ((key = ftok("test_shm", 'X')) < 0) {
+        if ((key = ftok("test_file", 'X')) < 0) {
 		perror("ftok");
                 exit(1);
 	}
@@ -111,8 +120,13 @@ int *attachShmMem(){
 	return data;
 }
 
-void deleteShmMem(){
-	/* delete he segment */
+/*
+ * Function:  delete_shm_mem
+ * -----------------------------------
+ *  Helper function to delete the created shared memory associated with shared memory ID.
+ */
+void delete_shm_mem(){
+	/* delete the segment */
        if( shmctl(shmid, IPC_RMID, NULL) == -1) {
             perror("shmctl");
             exit(1);
@@ -120,7 +134,7 @@ void deleteShmMem(){
 }
 
 /*
- * Function:  checkArgumentsForInteger
+ * Function:  check_arguments_for_integer
  * -----------------------------------
  *  Helper function to check if the arguments are positive integer.
  *
@@ -130,8 +144,7 @@ void deleteShmMem(){
  *
  *  returns: false, if any of the argument is not a positive integer, else true
  */
-
-bool checkArgumentsForInteger(int argc, char *argv[]){
+bool check_arguments_for_integer(int argc, char *argv[]){
 	regex_t regex;
 	int return_value;
 	for(int i = 1; i < argc; i++){
@@ -143,5 +156,3 @@ bool checkArgumentsForInteger(int argc, char *argv[]){
 	}
 	return true;
 }
-
-
