@@ -18,10 +18,31 @@
 
 //function declarations.
 bool check_arguments_for_integer(int argc, char *argv[]);
-int *attach_shm_mem();
+struct GameVariables *attach_shm_mem();
 void delete_shm_mem();
 
 int shmid;
+
+struct GameVariables {
+	int val1;
+	int val2;
+	int winnerId;
+	sem_t sem;
+}gv;
+
+void lock(struct GameVariables *data){
+        while (sem_trywait(&data->sem) < 0 ) {
+                if( errno == EAGAIN)
+                        continue;
+                else perror("sem_trywait failed:");
+        }
+	printf("lock aquired by: %d\n", getpid());
+}
+
+void unlock(struct GameVariables *data){
+        sem_post(&data->sem);
+	printf("lock released by: %d\n", getpid());
+}
 
 /*
  * Function: main
@@ -47,17 +68,10 @@ int main(int argc, char *argv[]){
 
 	int num_of_children = atoi(argv[1]);
         int max_value = atoi(argv[2]);
-        int *data= attach_shm_mem();
+	struct GameVariables *data= attach_shm_mem();
 	sem_t semaphore;
         pid_t pid = -1;
-	if(data[3] == 0){
-		sem_init(&semaphore, 1, 1);
-		int value; 
-		sem_getvalue(&semaphore, &value); 
-		data[3] = value;
-	}
-	printf("data value: %d\n", data[3]);
-	//create and attach shared memory
+	sem_init(&data->sem, 1, 1);
 	for(int i = 0; i < num_of_children; i++){
 		if(pid == -1 || pid > 0){
 			pid = fork();
@@ -67,9 +81,9 @@ int main(int argc, char *argv[]){
 
       	if(pid > 0){
 		//writing initial values to shared memory
-		data[0] = 1;
-	    	data[1] = 2;
-	    	data[2] = -1;
+		data->val1 = 1;
+	    	data->val2 = 2;
+	    	data->winnerId = -1;
               
 	    	while ((waitpid(-1, 0, 0)) != -1);
 	}
@@ -77,27 +91,25 @@ int main(int argc, char *argv[]){
         if (pid == 0){
 		//child block
 		printf("Executing child %d\n",getpid());
-		//sem_t sem = data[0];
-		while(sem_trywait(&semaphore) < 0){
-			if( errno == EAGAIN)
-			continue;
-			else perror("sem_trywait failed:");
-		}
-//		sem_wait(&siem);
 		
-		while(data[0] < max_value && data[1] < max_value && data[2] == -1){
-			int total = data[0] + data[1];
-			printf("%d - Calculating Sum\t Value 1: %d\t Value 2: %d\t Total: %d\n", getpid(), data[0], data[1], total);
-			if (total > max_value && data[2] == -1){
-				data[2] = getpid();
+		while(1){
+			lock(data);
+			int total = data->val1 + data->val2;
+			sleep(1);
+			printf("%d - Calculating Sum\t Value 1: %d\t Value 2: %d\t Total: %d\n", getpid(), data->val1, data->val2, total);
+			if (total > max_value && data->winnerId == -1){
+				data->winnerId = getpid();
 				printf("\n*** Winner PID: %d, Max Value: %d, Total: %d ***\n\n", getpid(), max_value, total);
+				unlock(data);
 				exit(0);
+				return 0;
 			} else {
-				if (data[0] < data[1])
-        	                        data[0] = total;
+				if (data->val1 < data->val2)
+        	                        data->val1 = total;
 	                        else
-                	                data[1] = total;
+                	                data->val2 = total;
 			}
+			unlock(data);
 
 		}
 	}
@@ -113,8 +125,8 @@ int main(int argc, char *argv[]){
  *
  *  returns: integer pointer to the shared memory.
  */
-int *attach_shm_mem(){
-	int *data;
+struct GameVariables *attach_shm_mem(){
+	struct GameVariables *data;
 	key_t key;
 	/* make the key: */
         if ((key = ftok("test_file", 'X')) < 0) {
@@ -132,7 +144,7 @@ int *attach_shm_mem(){
 
         /* attach to the segment to get a pointer to it: */
         data = shmat(shmid, (void *)0, 0);
-        if (data == (int *)(-1)) {
+        if (data == (struct GameVariables *)(-1)) {
 		perror("shmat");
                 exit(1);
         }
