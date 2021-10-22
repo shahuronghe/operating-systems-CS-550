@@ -60,9 +60,9 @@ int main(int argc, char *argv[]){
         int max_value = atoi(argv[2]);
 	struct GameVariables *data= attach_shm_mem();
 	
-	//data->val1 = 1;
-        //data->val2 = 2;
-        //data->winnerId = -1;
+	data->val1 = 1;
+        data->val2 = 2;
+        data->winnerId = -1;
 
 	sem_t semaphore;
         pid_t pid = -1;
@@ -76,17 +76,16 @@ int main(int argc, char *argv[]){
 
       	if(pid > 0){
 		//parent block
-		//writing initial values to shared memory
-		data->val1 = 1;
-	    	data->val2 = 2;
-	    	data->winnerId = -1;
+		//data->val1 = 1;
+	    	//data->val2 = 2;
+	    	//data->winnerId = -1;
               
 	    	while ((waitpid(-1, 0, 0)) != -1);
 	}
 
         if (pid == 0){
 		//child block
-		printf("Executing child %d\n",getpid());
+		printf("%d - Executing child\n",getpid());
 		
 		while(1){
 			lock(data);
@@ -103,7 +102,6 @@ int main(int argc, char *argv[]){
 			if (total > max_value && data->winnerId == -1){
                                 //winner pid found and putting it in shared memory
                                 data->winnerId = getpid();
-                                printf("\n*** Winner PID: %d, Max Value: %d, Total: %d ***\n\n", getpid(), max_value, total);
                                 unlock(data);
                                 exit(0);
                         }
@@ -117,7 +115,7 @@ int main(int argc, char *argv[]){
 			unlock(data);
 		}
 	}
-
+	printf("\n*** Winner PID: %d, value 1: %d, value 2: %d, Total: %d, max value: %d ***\n\n", data->winnerId, data->val1, data->val2, data->val1 + data->val2, max_value);
 	delete_shm_mem();	
 	return 0;	
 }
@@ -178,10 +176,10 @@ void delete_shm_mem(){
  */
 
 void lock(struct GameVariables *data){
-	if(sem_wait(&data->sem) < 0){
-		perror("sem_wait failed");
-	}
-        printf("lock aquired by %d\n", getpid());
+        if (sem_wait(&data->sem) < 0 ) {
+                perror("sem_wait failed:");
+        }
+        printf("%d - Lock aquired\n", getpid());
 }
 
 /*
@@ -194,7 +192,7 @@ void lock(struct GameVariables *data){
  */
 void unlock(struct GameVariables *data){
         sem_post(&data->sem);
-        printf("lock released by %d\n", getpid());
+        printf("%d - Lock released\n", getpid());
 }
 
 
