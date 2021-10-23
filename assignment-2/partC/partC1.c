@@ -139,7 +139,7 @@ int main(int argc, char *argv[]){
 	gettimeofday(&end_time, NULL);
 	long elapsed = end_time.tv_usec - start_time.tv_usec;
 	printf("Parent Total Execution Time: %ld\n", elapsed);
-	printf("Children Total Time: %ld, cycles: %ld", data-> total_child_time, data->number_of_cycles);
+        //printf("Children Total Time: %ld, cycles: %ld", data-> total_child_time, data->number_of_cycles);
 	long avg = data->total_child_time / data->number_of_cycles;
 	printf("Children Average Lock Aquired Time: %ld\n", avg);
 	delete_shm_mem();

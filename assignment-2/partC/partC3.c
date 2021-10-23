@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <errno.h>
+#include <sys/time.h>
 
 
 #define SHM_SIZE 1024  /* make it a 1K shared memory segment */
@@ -32,6 +33,8 @@ struct GameVariables {
 	int val2;
 	int winnerId;
 	sem_t sem;
+	long total_child_time;
+	long number_of_cycles;
 };
 
 /*
@@ -55,14 +58,19 @@ int main(int argc, char *argv[]){
 		printf("Please enter the number of levels of the tree (L) AND number of children of each internal node of the process tree (N).\n");
 		return -1;
 	}
+	struct timeval start_time;
+	gettimeofday(&start_time, NULL);
 
 	int num_of_children = atoi(argv[1]);
         int max_value = atoi(argv[2]);
 	struct GameVariables *data= attach_shm_mem();
-	
+	long child_avg = 0;
+	long number_of_cycles = 0;	
 	data->val1 = 1;
         data->val2 = 2;
         data->winnerId = -1;
+	data->total_child_time = 0;
+	data->number_of_cycles = 0;
 
 	sem_t semaphore;
         pid_t pid = -1;
@@ -76,19 +84,29 @@ int main(int argc, char *argv[]){
 
       	if(pid > 0){
 		//parent block
+		//writing initial values to shared memory
 		//data->val1 = 1;
 	    	//data->val2 = 2;
 	    	//data->winnerId = -1;
               
 	    	while ((waitpid(-1, 0, 0)) != -1);
 	}
-
         if (pid == 0){
 		//child block
-		printf("%d - Executing child\n",getpid());
+		//printf("%d - Executing child\n",getpid());
 		
 		while(1){
+			data->number_of_cycles++;
+			struct timeval t1;
+			gettimeofday(&t1, NULL);
 			lock(data);
+			struct timeval t2;
+			gettimeofday(&t2, NULL);
+			long diff = t2.tv_usec - t1.tv_usec;
+			//printf("child diff: %ld\n",diff);
+			data->total_child_time +=diff;
+
+
 			int total = data->val1 + data->val2;
 			//sleep(1);
 		       	if(data->winnerId != -1){
@@ -97,7 +115,7 @@ int main(int argc, char *argv[]){
 				exit(0);
 			}
 
-			printf("%d - Calculating Sum\t Value 1: %d\t Value 2: %d\t Total: %d\n", getpid(), data->val1, data->val2, total);
+			//printf("%d - Calculating Sum\t Value 1: %d\t Value 2: %d\t Total: %d\n", getpid(), data->val1, data->val2, total);
 
 			if (total > max_value && data->winnerId == -1){
                                 //winner pid found and putting it in shared memory
@@ -116,7 +134,15 @@ int main(int argc, char *argv[]){
 		}
 	}
 	printf("\n*** Winner PID: %d, value 1: %d, value 2: %d, Total: %d, max value: %d ***\n\n", data->winnerId, data->val1, data->val2, data->val1 + data->val2, max_value);
-	delete_shm_mem();	
+	delete_shm_mem();
+	struct timeval end_time;
+	gettimeofday(&end_time, NULL);
+	long elapsed = end_time.tv_usec - start_time.tv_usec;
+	printf("Parent Total Execution Time: %ld\n", elapsed);
+        //printf("Children Total Time: %ld, cycles: %ld", data-> total_child_time, data->number_of_cycles);
+	long avg = data->total_child_time / data->number_of_cycles;
+	printf("Children Average Lock Aquired Time: %ld\n", avg);
+	delete_shm_mem();
 	return 0;	
 }
 
@@ -179,7 +205,7 @@ void lock(struct GameVariables *data){
         if (sem_wait(&data->sem) < 0 ) {
                 perror("sem_wait failed:");
         }
-        printf("%d - Lock aquired\n", getpid());
+        //printf("%d - Lock aquired\n", getpid());
 }
 
 /*
@@ -192,7 +218,7 @@ void lock(struct GameVariables *data){
  */
 void unlock(struct GameVariables *data){
         sem_post(&data->sem);
-        printf("%d - Lock released\n", getpid());
+        //printf("%d - Lock released\n", getpid());
 }
 
 
