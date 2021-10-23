@@ -103,7 +103,7 @@ int main(int argc, char *argv[]){
 			struct timeval t2;
 			gettimeofday(&t2, NULL);
 			long diff = t2.tv_usec - t1.tv_usec;
-			printf("child diff: %ld\n",diff);
+			//printf("child diff: %ld\n",diff);
 			data->total_child_time +=diff;
 
 
